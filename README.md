@@ -1,17 +1,20 @@
 This project implements some PGP functionality with the [Solo](https://github.com/solokeys/solo) key.
 It is inspired by [this](https://boats.gitlab.io/blog/post/signing-commits-without-gpg/) blog post on how to sign git commits without GPG.
-You also need my custom Solo firmware which adds the ability to sign arbitrary SHA256 hashes.
+You also need my [custom](https://github.com/solokeys/solo/pull/397) Solo firmware which adds the ability to sign arbitrary SHA256 hashes.
 
 Setup
 ---
+Install the `fido2` Python library and export `SOLOPIN` with the PIN number of your Solo key.
+The scripts are using credential management APIs and they all require a PIN set.
 
 ```bash
 $ pip install fido2
 $ export SOLOPIN=1234
 ```
 
-Generating a new ECC key
+Generating a new PGP key
 ---
+Generated PGP keys are stored on the device as resident keys.
 
 ```bash
 $ ./solo-pgp.py --gen-key
@@ -48,6 +51,7 @@ Fingerprint: A8104854A9E174FBDB63F58D7D3E453464BC08F3
 
 Exporting a public key
 ---
+Public keys can be exported by key ID (8 bytes).
 
 ```bash
 $ ./solo-pgp.py --export 49103AEE98E03850
@@ -76,10 +80,13 @@ Z9wVDU0=
 
 Signing Git commits
 ---
+You need to tell Git the key ID that you are going to use and then set `gpg.program` to point to `solo-git.py`.
+When Git invokes `solo-git.py`, it will check if the operation is sign and use the Solo key if so.
+Otherwise it will delegate to `gpg`.
 
 ```bash
 $ git config user.signingkey 7D3E453464BC08F3
 $ git config gpg.program /opt/src/solo-pgp/solo-git.py
-# do stuff ...
+# do stuff and finally commit with -S to sign
 $ git commit -S
 ```
